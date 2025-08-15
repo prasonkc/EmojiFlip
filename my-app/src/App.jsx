@@ -43,37 +43,36 @@ const IMAGES = [
 function Card({ img, idx }) {
   const [flipped, setFlipped] = useState(false);
   return (
-    <div
-      className={`relative w-full h-full transition-transform duration-500 transform ${flipped ? "rotate-y-180" : ""}`}
-      onClick={handleClick}
-    >
+    <div className="w-50 h-55 m-2 perspective" onClick={handleClick}>
       <div
-        className="
-          card size-50 bg-gray-700 rounded-3xl 
-          m-3 shadow-2xl hover: cursor-pointer 
-          transform hover:scale-105 transition-transform 
-          duration-200 ease-in-out flex justify-center items-center"
+        className={`relative w-full h-full transition-transform duration-500 transform preserve-3d hover:scale-105 cursor-pointer ${
+          flipped ? "rotate-y-180" : ""
+        }`}
       >
-        {loadImage({ flipped, img, idx })}
+        {/* Front face */}
+        <div className="absolute inset-0 backface-hidden flex justify-center items-center bg-gray-700 rounded-3xl shadow-2xl">
+          <span className="text-8xl text-white">?</span>
+        </div>
+
+        {/* Back face */}
+        <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl shadow-2xl overflow-hidden">
+          <img
+            src={img}
+            alt={`Card ${idx}`}
+            className="w-full h-full object-cover"
+          />
+        </div>
       </div>
     </div>
   );
 
-  function loadImage({ flipped, img, idx }) {
-    if (!flipped) {
-      return <span className=" text-8xl">?</span>;
-    } else {
-      <img
-        src={img}
-        alt={`Card ${idx}`}
-        className="w-full h-full object-cover rounded-3xl shadow-2xl"
-      />;
-    }
-  }
-
   function handleClick() {
     if (!flipped) {
       setFlipped(true);
+
+      setTimeout(() => {
+        setFlipped(false);
+      }, 1000);
     }
   }
 }
