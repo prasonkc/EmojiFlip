@@ -19,13 +19,6 @@ import sticker16 from "../assets/shogun_1.jpg";
 import sticker17 from "../assets/paimon_1.jpg";
 
 const SIZE = 24; //Size should always be an even number
-function Card({ img, idx }) {
-  return (
-    <div className="card size-50 bg-gray-700 rounded-3xl m-3 shadow-2xl hover: cursor-pointer transform hover:scale-105 transition-transform duration-200 ease-in-out">
-      <img src={img} alt={`Card${idx}`} className="w-full h-full object-cover rounded-3xl" />
-    </div>
-  );
-}
 
 const IMAGES = [
   sticker1,
@@ -47,6 +40,44 @@ const IMAGES = [
   sticker17,
 ];
 
+function Card({ img, idx }) {
+  const [flipped, setFlipped] = useState(false);
+  return (
+    <div
+      className={`relative w-full h-full transition-transform duration-500 transform ${flipped ? "rotate-y-180" : ""}`}
+      onClick={handleClick}
+    >
+      <div
+        className="
+          card size-50 bg-gray-700 rounded-3xl 
+          m-3 shadow-2xl hover: cursor-pointer 
+          transform hover:scale-105 transition-transform 
+          duration-200 ease-in-out flex justify-center items-center"
+      >
+        {loadImage({ flipped, img, idx })}
+      </div>
+    </div>
+  );
+
+  function loadImage({ flipped, img, idx }) {
+    if (!flipped) {
+      return <span className=" text-8xl">?</span>;
+    } else {
+      <img
+        src={img}
+        alt={`Card ${idx}`}
+        className="w-full h-full object-cover rounded-3xl shadow-2xl"
+      />;
+    }
+  }
+
+  function handleClick() {
+    if (!flipped) {
+      setFlipped(true);
+    }
+  }
+}
+
 function Container() {
   const cards = [];
   const images = generateCardImages(SIZE);
@@ -54,7 +85,6 @@ function Container() {
     cards.push(<Card />);
   }
   return (
-    
     <div className="container bg-gray-800 grid grid-cols-6 m-auto rounded-2xl items-center justify-center p-5 w-fit">
       {images.map((img, idx) => (
         <Card key={idx} img={img} idx={idx} />
