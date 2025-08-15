@@ -16,7 +16,7 @@ function Container() {
     cards.push(<Card />);
   }
   return (
-    <div className="container bg-gray-800 flex m-auto rounded-2xl items-center justify-center py-5 flex-wrap w-fit">
+    <div className="container bg-gray-800 grid grid-cols-6 m-auto rounded-2xl items-center justify-center p-5 w-fit">
       {cards}
     </div>
   );
