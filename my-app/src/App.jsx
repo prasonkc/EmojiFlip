@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import "./App.css";
 import sticker1 from "../assets/fischl_1.jpg";
 import sticker2 from "../assets/furina_1.jpg";
@@ -18,7 +18,7 @@ import sticker15 from "../assets/yae_1.jpg";
 import sticker16 from "../assets/shogun_1.jpg";
 import sticker17 from "../assets/paimon_1.jpg";
 
-const SIZE = 24; //Size should always be an even number
+const SIZE = 24; // must be even
 
 const IMAGES = [
   sticker1,
@@ -40,10 +40,22 @@ const IMAGES = [
   sticker17,
 ];
 
-function Card({ img, idx }) {
+function Card({ img, idx, onFlip, matched }) {
   const [flipped, setFlipped] = useState(false);
+
+  function handleClick() {
+    if (flipped || matched) return;
+    const allowed = onFlip(idx, img, setFlipped);
+    if (allowed) setFlipped(true);
+  }
+
   return (
-    <div className="w-50 h-55 m-2 perspective" onClick={handleClick}>
+    <div
+      className={`w-50 h-55 m-2 perspective ${
+        matched ? "scale-110 opacity-0 transition-all duration-500" : ""
+      }`}
+      onClick={handleClick}
+    >
       <div
         className={`relative w-full h-full transition-transform duration-500 transform preserve-3d hover:scale-105 cursor-pointer ${
           flipped ? "rotate-y-180" : ""
@@ -65,58 +77,93 @@ function Card({ img, idx }) {
       </div>
     </div>
   );
-
-  function handleClick() {
-    if (!flipped) {
-      setFlipped(true);
-
-      setTimeout(() => {
-        setFlipped(false);
-      }, 1000);
-    }
-  }
 }
 
 function Container() {
-  const cards = [];
-  const images = generateCardImages(SIZE);
-  for (let i = 0; i < SIZE; i++) {
-    cards.push(<Card />);
+  const [flippedCards, setFlippedCards] = useState([]);
+  const [matchedCards, setMatchedCards] = useState([]);
+  const [isBusy, setIsBusy] = useState(false);
+
+  const images = useMemo(() => generateCardImages(SIZE), []);
+
+  function handleFlip(idx, img, setCardFlipped) {
+    if (isBusy || matchedCards.includes(idx)) return false;
+
+    const pending = [...flippedCards, { idx, img, setCardFlipped }];
+
+    if (pending.length === 1) {
+      setFlippedCards(pending);
+      return true;
+    }
+
+    if (pending.length === 2) {
+      setIsBusy(true);
+      setFlippedCards(pending);
+      const [a, b] = pending;
+
+      if (a.img === b.img) {
+        setTimeout(() => {
+          setMatchedCards((prev) => [...prev, a.idx, b.idx]);
+          setFlippedCards([]);
+          setIsBusy(false);
+        }, 300);
+      } else {
+        setTimeout(() => {
+          a.setCardFlipped(false);
+          b.setCardFlipped(false);
+          setFlippedCards([]);
+          setIsBusy(false);
+        }, 1000);
+      }
+      return true;
+    }
+
+    return false;
   }
+
+  const gameWon = matchedCards.length === SIZE;
+
   return (
-    <div className="container bg-gray-800 grid grid-cols-6 m-auto rounded-2xl items-center justify-center p-5 w-fit">
-      {images.map((img, idx) => (
-        <Card key={idx} img={img} idx={idx} />
-      ))}
-    </div>
+    <>
+      <div className="container bg-gray-800 grid grid-cols-6 m-auto rounded-2xl items-center justify-center p-5 w-fit">
+        {images.map((img, idx) => (
+          <Card
+            key={idx}
+            img={img}
+            idx={idx}
+            onFlip={handleFlip}
+            matched={matchedCards.includes(idx)}
+          />
+        ))}
+      </div>
+
+      {gameWon && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl text-white bg-gray-800 p-6 rounded-2xl shadow-2xl">
+          🎉 You beat the game!
+        </div>
+      )}
+    </>
   );
 }
 
-function generateCardImages(SIZE) {
-  let selectedImages = [];
-
-  for (let i = 0; i < SIZE / 2; i++) {
-    let img = IMAGES[i % IMAGES.length];
-    selectedImages.push(img, img); // Push each image twice for pairs
+function generateCardImages(size) {
+  const selected = [];
+  for (let i = 0; i < size / 2; i++) {
+    const img = IMAGES[i % IMAGES.length];
+    selected.push(img, img);
   }
-
-  //Fisher-Yates shuffle algorithm
-  for (let i = selectedImages.length - 1; i > 0; i--) {
-    //loop from the end to beginning
-    const j = Math.floor(Math.random() * (i + 1)); //Pick a random index
-    [selectedImages[i], selectedImages[j]] = [
-      selectedImages[j],
-      selectedImages[i],
-    ]; //swap the elements
+  // Fisher–Yates shuffle
+  for (let i = selected.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [selected[i], selected[j]] = [selected[j], selected[i]];
   }
-  return selectedImages;
+  return selected;
 }
 
 function App() {
   return (
     <>
       <h1 className="text-center">Flip Your Cards!!</h1>
-
       <div className="h-screen bg-gray-900 flex items-center justify-center">
         <Container />
       </div>
